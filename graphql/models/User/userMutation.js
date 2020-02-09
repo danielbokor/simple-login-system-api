@@ -1,7 +1,7 @@
-const createAuthToken = require('./mutations/createAuthToken');
+const createTokens = require('./mutations/createTokens');
 const registerUser = require('./mutations/registerUser');
 
 module.exports = {
-    createAuthToken,
+    createTokens,
     registerUser,
 };

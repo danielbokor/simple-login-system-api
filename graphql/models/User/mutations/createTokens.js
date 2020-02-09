@@ -3,9 +3,9 @@ const {
     GraphQLNonNull,
     GraphQLString,
 } = require('graphql');
-const userType = require('../userType');
+const NotFoundError = require('../../../../errors/NotFoundError.js');
 
-const createAuthToken = {
+const createTokens = {
     type: new GraphQLObjectType({
         name: 'SigninPayload',
         fields: {
@@ -41,19 +41,37 @@ const createAuthToken = {
             description: "A user's password.",
         },
     },
-    resolve: (
+    resolve: async (
         parent,
-        { email, password }
+        args,
+        { mongo: { User } },
     ) => {
-        console.log(`email ${email} password ${password}`);
+        const user = await User.findOne({ email: args.email });
+        if (!user) {
+            throw new NotFoundError({
+                message: 'User not found',
+            });
+        }
+
+        if (!await user.checkPassword(args.password)) {
+            throw new NotFoundError({
+                message: 'User not found',
+            });
+        }
+
+        const authToken = user.createAuthToken();
+        const refreshToken = user.createRefreshToken();
+
+        const { firstName, lastName, email } = user;
+
         return {
-            authToken: 'my auth token',
-            refreshToken: 'my refresh token',
-            firstName: 'my first name',
-            lastName: 'my last name',
-            email: 'my email address',
+            authToken,
+            refreshToken,
+            firstName,
+            lastName,
+            email,
         };
     },
 };
 
-module.exports = createAuthToken;
+module.exports = createTokens;

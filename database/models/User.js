@@ -1,14 +1,13 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { secret } = require('../../config');
 
 const SALT_ROUNDS = 12;
 
 const TOKEN_EXPIRY = {
     ONE_HOUR: '1h',
-    ONE_DAY: '1d',
-    TWO_DAYS: '2d',
-    ONE_MONTH: '30d',
+    ONE_WEEK: '7d',
 };
 
 const UserSchema = new mongoose.Schema({
@@ -61,15 +60,9 @@ UserSchema.methods.checkPassword = async function checkPassword(password) {
     return bcrypt.compare(password, this.password);
 };
 
-UserSchema.methods.createSessionToken = async function createSessionToken(remember) {
-    const expiresIn = remember ? TOKEN_EXPIRY.ONE_MONTH : TOKEN_EXPIRY.ONE_DAY;
+UserSchema.methods.createAuthToken = () => createToken(TOKEN_EXPIRY.ONE_HOUR);
 
-    return jwt.sign({
-        user: {
-            id: this.id,
-        },
-    }, CONFIG.secret, { expiresIn });
-};
+UserSchema.methods.createRefreshToken = () => createToken(TOKEN_EXPIRY.ONE_WEEK);
 
 UserSchema.statics.verifyToken = async function verifyToken(token) {
     try {
@@ -77,6 +70,14 @@ UserSchema.statics.verifyToken = async function verifyToken(token) {
     } catch (e) {
         return false;
     }
+};
+
+function createToken(expiresIn) {
+    return jwt.sign({
+        user: {
+            id: this.id,
+        },
+    }, secret, { expiresIn });
 };
 
 module.exports = mongoose.model('User', UserSchema);

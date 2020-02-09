@@ -1,4 +1,4 @@
-const { createError } = request('apollo-errors');
+const { createError } = require('apollo-errors');
 
 const NotFoundError = createError('NotFoundError', {
     message: 'Not Found',
@@ -7,4 +7,4 @@ const NotFoundError = createError('NotFoundError', {
     },
 });
 
-export default NotFoundError;
+module.exports = NotFoundError;
