@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { secret } = require('../../config');
+const { authTokenSecret, refreshTokenSecret } = require('../../config');
 
 const SALT_ROUNDS = 12;
 
@@ -60,24 +60,40 @@ UserSchema.methods.checkPassword = async function checkPassword(password) {
     return bcrypt.compare(password, this.password);
 };
 
-UserSchema.methods.createAuthToken = () => createToken(TOKEN_EXPIRY.ONE_HOUR);
+UserSchema.methods.createAuthToken = async function createToken() {
+    const expiresIn = TOKEN_EXPIRY.ONE_HOUR;
 
-UserSchema.methods.createRefreshToken = () => createToken(TOKEN_EXPIRY.ONE_WEEK);
+    return jwt.sign({
+        user: {
+            id: this.id,
+        },
+    }, authTokenSecret, { expiresIn });
+};
 
-UserSchema.statics.verifyToken = async function verifyToken(token) {
+UserSchema.methods.createRefreshToken = async function createToken() {
+    const expiresIn = TOKEN_EXPIRY.ONE_WEEK;
+    
+    return jwt.sign({
+        user: {
+            id: this.id,
+        },
+    }, refreshTokenSecret, { expiresIn });
+};
+
+UserSchema.statics.verifyAuthToken = async function verifyAuthToken(token) {
     try {
-        return jwt.verify(token, CONFIG.secret);
+        return jwt.verify(token, authTokenSecret);
     } catch (e) {
         return false;
     }
 };
 
-function createToken(expiresIn) {
-    return jwt.sign({
-        user: {
-            id: this.id,
-        },
-    }, secret, { expiresIn });
+UserSchema.statics.verifyRefreshToken = async function verifyRefreshToken(token) {
+    try {
+        return jwt.verify(token, refreshTokenSecret);
+    } catch (e) {
+        return false;
+    }
 };
 
 module.exports = mongoose.model('User', UserSchema);
