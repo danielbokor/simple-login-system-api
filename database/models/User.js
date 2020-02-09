@@ -1,6 +1,15 @@
 const mongoose = require('mongoose');
-const brypt = require('bcrypt');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+
+const SALT_ROUNDS = 12;
+
+const TOKEN_EXPIRY = {
+    ONE_HOUR: '1h',
+    ONE_DAY: '1d',
+    TWO_DAYS: '2d',
+    ONE_MONTH: '30d',
+};
 
 const UserSchema = new mongoose.Schema({
     firstName: {
